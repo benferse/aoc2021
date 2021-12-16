@@ -80,6 +80,49 @@ impl Position {
     }
 }
 
+#[derive(Debug, PartialEq)]
+pub struct Bearing {
+    pub position: Position,
+    pub aim: u32,
+}
+
+impl Bearing {
+    pub fn new() -> Self {
+        Self {
+            position: Position(0, 0),
+            aim: 0,
+        }
+    }
+
+    /// Execute a single command against this bearing, and return
+    /// the resulting new bearing relative to this starting state.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use aoc2021::day2::{Bearing, Command, Position};
+    /// let b = Bearing::new()
+    ///   .execute(Command::Forward(5))
+    ///   .execute(Command::Down(5))
+    ///   .execute(Command::Forward(8))
+    ///   .execute(Command::Up(3))
+    ///   .execute(Command::Down(8))
+    ///   .execute(Command::Forward(2));
+    /// assert_eq!(b.position, Position(15, 60));
+    ///
+    /// ```
+    pub fn execute(self, cmd: Command) -> Self {
+        match cmd {
+            Command::Down(x) => Self { aim: self.aim + x, ..self },
+            Command::Up(x) => Self { aim: self.aim.checked_sub(x).unwrap_or(0), ..self },
+            Command::Forward(x) => {
+                let position = Position(self.position.0 + x, self.position.1 + (x * self.aim));
+                Self { position, ..self }
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod answers {
     use super::*;
@@ -91,6 +134,14 @@ mod answers {
             .fold(Position(0,0), |acc, x| acc.execute(x.parse().unwrap()));
 
         assert_eq!(position.0 * position.1, 1250395);
-        println!("Day 2 puzzle 1 answer - {} ({:?})", position.0 * position.1, position);
+    }
+
+    #[test]
+    fn puzzle2() {
+        let Bearing { position, .. } = include_str!("./input/day2")
+            .lines()
+            .fold(Bearing::new(), |acc, x| acc.execute(x.parse().unwrap()));
+
+        assert_eq!(position.0 * position.1, 1451210346);
     }
 }
