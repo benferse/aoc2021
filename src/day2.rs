@@ -75,7 +75,7 @@ impl Position {
         match cmd {
             Command::Forward(x) => Self(self.0 + x, self.1),
             Command::Down(x) => Self(self.0, self.1 + x),
-            Command::Up(x) => Self(self.0, self.1.checked_sub(x).unwrap_or(0)),
+            Command::Up(x) => Self(self.0, self.1.saturating_sub(x)),
         }
     }
 }
@@ -86,14 +86,16 @@ pub struct Bearing {
     pub aim: u32,
 }
 
-impl Bearing {
-    pub fn new() -> Self {
+impl Default for Bearing {
+    fn default() -> Self {
         Self {
             position: Position(0, 0),
             aim: 0,
         }
     }
+}
 
+impl Bearing {
     /// Execute a single command against this bearing, and return
     /// the resulting new bearing relative to this starting state.
     ///
@@ -101,7 +103,7 @@ impl Bearing {
     ///
     /// ```
     /// use aoc2021::day2::{Bearing, Command, Position};
-    /// let b = Bearing::new()
+    /// let b = Bearing::default()
     ///   .execute(Command::Forward(5))
     ///   .execute(Command::Down(5))
     ///   .execute(Command::Forward(8))
@@ -114,7 +116,7 @@ impl Bearing {
     pub fn execute(self, cmd: Command) -> Self {
         match cmd {
             Command::Down(x) => Self { aim: self.aim + x, ..self },
-            Command::Up(x) => Self { aim: self.aim.checked_sub(x).unwrap_or(0), ..self },
+            Command::Up(x) => Self { aim: self.aim.saturating_sub(x), ..self },
             Command::Forward(x) => {
                 let position = Position(self.position.0 + x, self.position.1 + (x * self.aim));
                 Self { position, ..self }
@@ -140,7 +142,7 @@ mod answers {
     fn puzzle2() {
         let Bearing { position, .. } = include_str!("./input/day2")
             .lines()
-            .fold(Bearing::new(), |acc, x| acc.execute(x.parse().unwrap()));
+            .fold(Bearing::default(), |acc, x| acc.execute(x.parse().unwrap()));
 
         assert_eq!(position.0 * position.1, 1451210346);
     }
