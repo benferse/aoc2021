@@ -67,12 +67,15 @@ impl Position {
     ///   .execute(Command::Down(8))
     ///   .execute(Command::Forward(2));
     /// assert_eq!(p, Position(15, 10));
+    ///
+    /// // Don't let our submarine fly, because that's weird
+    /// assert_eq!(Position(0,0).execute(Command::Up(1)), Position(0,0));
     /// ```
     pub fn execute(self, cmd: Command) -> Self {
         match cmd {
             Command::Forward(x) => Self(self.0 + x, self.1),
             Command::Down(x) => Self(self.0, self.1 + x),
-            Command::Up(x) => Self(self.0, self.1 - x),
+            Command::Up(x) => Self(self.0, self.1.checked_sub(x).unwrap_or(0)),
         }
     }
 }
@@ -88,5 +91,6 @@ mod answers {
             .fold(Position(0,0), |acc, x| acc.execute(x.parse().unwrap()));
 
         assert_eq!(position.0 * position.1, 1250395);
+        println!("Day 2 puzzle 1 answer - {} ({:?})", position.0 * position.1, position);
     }
 }
