@@ -56,11 +56,11 @@ mod answers {
 
     #[test]
     fn puzzle1() {
-        println!("Puzzle answer is {}", count_measurements(get_input()));
+        assert_eq!(count_measurements(get_input()), 1688);
     }
 
     #[test]
     fn puzzle2() {
-        println!("Puzzle answer is {}", count_triples(get_input()));
+        assert_eq!(count_triples(get_input()), 1728);
     }
 }
