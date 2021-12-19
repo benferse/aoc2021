@@ -16,11 +16,15 @@ pub struct BingoCard {
     spots: HashMap<u32, Coords>,
     row_counts: [u32; 5],
     col_counts: [u32; 5],
+    still_playing: bool,
 }
 
 impl BingoCard {
     pub fn from_lines(input: &[&str]) -> Self {
-        let mut card: BingoCard = Default::default();
+        let mut card = Self {
+            still_playing: true,
+            ..Default::default()
+        };
 
         for (n, line) in input.iter().enumerate().take(5) {
             line
@@ -49,13 +53,13 @@ impl BingoCard {
         }
     }
 
-    pub fn winning_score(&self) -> u32 {
+    pub fn declare_victory(&mut self) -> u32 {
+        self.still_playing = false;
         self.spots.keys().sum()
     }
 }
 
-/// Play a round of bingo, returning the "winning score" of
-/// the first card to win, if any (0 otherwise)
+/// Play a round of bingo, returning the scores of the cards that won (in order)
 ///
 /// # Examples
 ///
@@ -67,18 +71,22 @@ impl BingoCard {
 /// let card2 = BingoCard::from_lines(&["3 15 0 2 22", "9 18 13 17 5", "19 8 7 25 23", "20 11 10 24 4", "14 21 16 12 6"]);
 /// let card3 = BingoCard::from_lines(&["14 21 17 24 4", "10 16 15 9 19", "18 8 23 26 20", "22 11 13 6 5", "2 0 12 3 7"]);
 ///
-/// assert_eq!(play_bingo(vec![card1, card2, card3], numbers), 4512);
+/// let results = play_bingo(vec![card1, card2, card3], numbers);
+/// assert_eq!(results.first(), Some(&4512));
+/// assert_eq!(results.last(), Some(&1924));
 /// ```
-pub fn play_bingo(mut cards: Vec<BingoCard>, numbers: Vec<u32>) -> u32 {
+pub fn play_bingo(mut cards: Vec<BingoCard>, numbers: Vec<u32>) -> Vec<u32> {
+    let mut winning_scores = vec![];
+
     for number in numbers {
-        for card in cards.iter_mut() {
+        for card in cards.iter_mut().filter(|x| x.still_playing) {
             if card.mark_spot(number) {
-                return card.winning_score() * number;
+                winning_scores.push(card.declare_victory() * number);
             }
         }
     }
 
-    0
+    winning_scores
 }
 
 #[cfg(test)]
@@ -86,7 +94,7 @@ mod answers {
     use super::*;
 
     #[test]
-    fn puzzle1() {
+    fn puzzle1_and_puzzle2() {
         // Parse the input file - the first line is the list of numbers called,
         // then some number of bingo cards, all separated by whitespace
         let mut input: Vec<&str> = include_str!("./input/day4")
@@ -102,10 +110,12 @@ mod answers {
         let mut cards: Vec<BingoCard> = vec![];
 
         for chunk in input.chunks_exact(5) {
-            println!("{}", chunk[0]);
             cards.push(BingoCard::from_lines(chunk));
         }
 
-        assert_eq!(play_bingo(cards, numbers), 82440);
+        let results = play_bingo(cards, numbers);
+
+        assert_eq!(results.first(), Some(&82440));
+        assert_eq!(results.last(), Some(&20774));
     }
 }
