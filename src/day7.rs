@@ -1,15 +1,37 @@
-pub fn optimize_crabs(values: &mut[u32]) -> u32 {
-    // Simply find the median of the sequence, and then the
-    // total variance from the median
-    values.sort_unstable();
+pub fn constant_burn(x: u32) -> u32 {
+    x
+}
 
-    let div = values.len() / 2;
-    let rem = values.len() % 2;
-    let median = if rem == 0 { values[div] } else { (values[div] + values[div + 1]) / 2 };
+pub fn linear_burn(x: u32) -> u32 {
+    (x * (x + 1)) / 2
+}
 
+pub fn geometric_median(values: &[u32]) -> u32 {
+    let mut copied: Vec<u32> = values
+        .iter()
+        .map(|x| *x)
+        .collect();
+
+    copied.sort_unstable();
+
+    let div = copied.len() / 2;
+    let rem = copied.len() % 2;
+
+    if rem == 0 { copied[div] } else { (copied[div] + copied[div + 1]) / 2 }
+}
+
+pub fn arithmetic_mean(values: &[u32]) -> u32 {
+    let sum: u32 = values.iter().sum();
+    let count = values.len() as f32;
+    unsafe { (sum as f32 / count).floor().to_int_unchecked() }
+}
+
+pub fn optimize_crabs<B, M>(values: &mut[u32], midpoint_selector: M, burn_rate: B) -> u32
+where B: Fn(u32) -> u32, M: Fn(&[u32]) -> u32 {
+    let median = midpoint_selector(values);
     values
         .iter()
-        .fold(0, |acc, x| acc + x.abs_diff(median))
+        .fold(0, |acc, x| acc + burn_rate(x.abs_diff(median)))
 }
 
 #[cfg(test)]
@@ -19,7 +41,13 @@ mod answers {
     #[test]
     fn example1() {
         let mut crabs = vec![16, 1, 2, 0, 4, 2, 7, 1, 2, 14];
-        assert_eq!(optimize_crabs(&mut crabs), 37);
+        assert_eq!(optimize_crabs(&mut crabs, geometric_median, constant_burn), 37);
+    }
+
+    #[test]
+    fn example2() {
+        let mut crabs = vec![16, 1, 2, 0, 4, 2, 7, 1, 2, 14];
+        assert_eq!(optimize_crabs(&mut crabs, arithmetic_mean, linear_burn), 168);
     }
 
     #[test]
@@ -29,6 +57,16 @@ mod answers {
             .map(|x| x.trim().parse().unwrap())
             .collect();
 
-            assert_eq!(optimize_crabs(&mut crabs), 359648);
+            assert_eq!(optimize_crabs(&mut crabs, geometric_median, constant_burn), 359648);
+    }
+
+    #[test]
+    fn puzzle2() {
+        let mut crabs: Vec<u32> = include_str!("./input/day7")
+            .split_terminator(',')
+            .map(|x| x.trim().parse().unwrap())
+            .collect();
+
+        assert_eq!(optimize_crabs(&mut crabs, arithmetic_mean, linear_burn), 100727924);
     }
 }
