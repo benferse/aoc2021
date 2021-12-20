@@ -7,11 +7,7 @@ pub fn linear_burn(x: u32) -> u32 {
 }
 
 pub fn geometric_median(values: &[u32]) -> u32 {
-    let mut copied: Vec<u32> = values
-        .iter()
-        .map(|x| *x)
-        .collect();
-
+    let mut copied = values.to_vec();
     copied.sort_unstable();
 
     let div = copied.len() / 2;
@@ -22,16 +18,22 @@ pub fn geometric_median(values: &[u32]) -> u32 {
 
 pub fn arithmetic_mean(values: &[u32]) -> u32 {
     let sum: u32 = values.iter().sum();
-    let count = values.len() as f32;
-    unsafe { (sum as f32 / count).floor().to_int_unchecked() }
+    let count = values.len() as u32;
+    sum / count
 }
 
 pub fn optimize_crabs<B, M>(values: &mut[u32], midpoint_selector: M, burn_rate: B) -> u32
 where B: Fn(u32) -> u32, M: Fn(&[u32]) -> u32 {
     let median = midpoint_selector(values);
-    values
+
+    let x = values
         .iter()
-        .fold(0, |acc, x| acc + burn_rate(x.abs_diff(median)))
+        .fold(0, |acc, x| acc + burn_rate(x.abs_diff(median)));
+    let y = values
+        .iter()
+        .fold(0, |acc, x| acc + burn_rate(x.abs_diff(median+1)));
+
+    if x < y { x } else { y }
 }
 
 #[cfg(test)]
