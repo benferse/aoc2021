@@ -1,4 +1,3 @@
-#![feature(int_abs_diff)]
 #![feature(iter_partition_in_place)]
 
 pub mod day1;

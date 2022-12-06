@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use eyre::{Result, WrapErr};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Command {
     Forward(u32),
     Down(u32),
